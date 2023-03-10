@@ -3,14 +3,14 @@ import unittest
 
 from pytket_qirpass import apply_qirpass
 
-from llvmlite.binding import create_context, parse_assembly, parse_bitcode
+from llvmlite.binding import create_context, parse_assembly, parse_bitcode, ModuleRef
 from pytket.circuit import OpType
 from pytket.passes import FullPeepholeOptimise
 
 QIR_DIR = Path(__file__).parent.resolve() / "qir"
 
 
-def ll_to_module(ll: str) -> bytes:
+def ll_to_module(ll: str) -> ModuleRef:
     ctx = create_context()
     module = parse_assembly(ll, context=ctx)
     module.verify()
@@ -287,7 +287,7 @@ prognames_2 = [
 ]
 
 
-def check_compilation(qir_ll_in):
+def check_compilation(qir_ll_in: str) -> None:
     qir_in = ll_to_bc(qir_ll_in)
     qir_out = apply_qirpass(
         qir_in,
@@ -304,12 +304,16 @@ class TestQirPass(unittest.TestCase):
     def test_qirpass(self):
         for progname in prognames_1:
             with self.subTest(msg=f"Compiling {progname}"):
-                with open(QIR_DIR / "batch_1" / f"{progname}.ll") as f:
+                with open(
+                    QIR_DIR / "batch_1" / f"{progname}.ll", encoding="utf-8"
+                ) as f:
                     qir_ll_in = f.read()
                 check_compilation(qir_ll_in)
         for progname in prognames_2:
             with self.subTest(msg=f"Compiling {progname}"):
-                with open(QIR_DIR / "batch_2" / f"{progname}.ll") as f:
+                with open(
+                    QIR_DIR / "batch_2" / f"{progname}.ll", encoding="utf-8"
+                ) as f:
                     qir_ll_in = f.read()
                 check_compilation(qir_ll_in)
 

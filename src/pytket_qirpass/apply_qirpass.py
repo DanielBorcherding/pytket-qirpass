@@ -1,9 +1,15 @@
 from math import pi
 import struct
-from typing import Set
+from typing import List, Set, Tuple
 
-from llvmlite.binding import create_context, parse_assembly, parse_bitcode
-from pytket.circuit import Bit, Circuit, OpType, Qubit
+from llvmlite.binding import (
+    create_context,
+    parse_assembly,
+    parse_bitcode,
+    ModuleRef,
+    ValueRef,
+)
+from pytket.circuit import Bit, Circuit, Node, OpType, Qubit
 from pytket.passes import (
     BasePass,
     RemoveImplicitQubitPermutation,
@@ -36,14 +42,14 @@ tk_to_qir = {optype: (name, sig) for name, (optype, sig) in opdata.items()}
 
 
 def encode_double(a: float) -> str:
-    assert type(a) is float
+    assert isinstance(a, float)
     encoding = struct.unpack("Q", struct.pack("d", a))
     assert len(encoding) == 1
     return f'double {"0x{:016X}".format(encoding[0])}'
 
 
 def decode_double(s: str) -> float:
-    assert type(s) is str
+    assert isinstance(s, str)
     words = s.split(" ")
     assert len(words) == 2 and words[0] == "double"
     encoding = words[1]
@@ -54,12 +60,13 @@ def decode_double(s: str) -> float:
         return struct.unpack("d", struct.pack("Q", n))[0]
 
 
-def parse_instr(instr):
+def parse_instr(instr: ValueRef) -> Tuple[OpType, List[float], List[Qubit], List[Bit]]:
+    assert instr.is_instruction
     assert instr.opcode == "call"
     assert str(instr.type) == "void"
     operands = list(instr.operands)
     assert len(operands) >= 1
-    optype, sig = opdata[operands[-1].name]
+    optype, _ = opdata[operands[-1].name]
     params = []
     q_args = []
     c_args = []
@@ -87,7 +94,7 @@ def parse_instr(instr):
     return (optype, params, q_args, c_args)
 
 
-def to_circuit(instrs):
+def to_circuit(instrs: List[ValueRef]) -> Circuit:
     circuit = Circuit()
     for instr in instrs:
         optype, params, q_args, c_args = parse_instr(instr)
@@ -99,33 +106,34 @@ def to_circuit(instrs):
     return circuit
 
 
-def argrep(arg):
+def argrep(arg: Node) -> str:
     if arg.reg_name == "q":
         assert len(arg.index) == 1
         q = arg.index[0]
         if q == 0:
             return "%Qubit* null"
-        else:
-            return f"%Qubit* nonnull inttoptr (i64 {q} to %Qubit*)"
+        return f"%Qubit* nonnull inttoptr (i64 {q} to %Qubit*)"
     else:
         assert arg.reg_name == "c"
         assert len(arg.index) == 1
         c = arg.index[0]
         if c == 0:
             return "%Result* null"
-        else:
-            return f"%Result* nonnull inttoptr (i64 {c} to %Result*)"
+        return f"%Result* nonnull inttoptr (i64 {c} to %Result*)"
 
 
-def is_known_type(instr):
+def is_known_type(instr: ValueRef) -> bool:
+    assert instr.is_instruction
     if instr.opcode != "call":
         return False
     operands = list(instr.operands)
     assert len(operands) >= 1
-    return operands[-1].name in opdata.keys()
+    return operands[-1].name in opdata
 
 
-def partition_instrs(instrs):
+def partition_instrs(
+    instrs: List[ValueRef],
+) -> List[Tuple[List[ValueRef], List[ValueRef]]]:
     # Organize the instructions into a list of pairs of lists, each pair consisting of
     # all-known and all-unknown, preserving the original order.
     n_instrs = len(instrs)
@@ -143,7 +151,8 @@ def partition_instrs(instrs):
     return [(known_sub_block, unknown_sub_block)] + partition_instrs(instrs[i:])
 
 
-def compile_basic_block_ll(basic_block, comp_pass):
+def compile_basic_block_ll(basic_block: ValueRef, comp_pass: BasePass):
+    assert basic_block.is_block
     bb_ll = ""
     if basic_block.name != "":
         bb_ll += str(basic_block).split("\n")[1] + "\n"  # keep top line with label
@@ -171,14 +180,14 @@ def compile_basic_block_ll(basic_block, comp_pass):
     return bb_ll
 
 
-def bc_to_module(bc: bytes):
+def bc_to_module(bc: bytes) -> ModuleRef:
     ctx = create_context()
     module = parse_bitcode(bc, context=ctx)
     module.verify()
     return module
 
 
-def ll_to_module(ll: str) -> bytes:
+def ll_to_module(ll: str) -> ModuleRef:
     ctx = create_context()
     module = parse_assembly(ll, context=ctx)
     module.verify()
@@ -197,7 +206,8 @@ def is_header_line(line: str) -> bool:
     return len(words) >= 3 and "=" in words[1:-1]
 
 
-def is_entry_point(function):
+def is_entry_point(function: ValueRef) -> bool:
+    assert function.is_function
     return any(b'"EntryPoint"' in attrs for attrs in function.attributes)
 
 
@@ -265,12 +275,14 @@ def apply_qirpass(
             # This is an external declaration
             decl = str(function)
             # if it's not one of the "known" functions, include verbatim
-            if not any(name in decl for name in opdata.keys()):
+            if not any(name in decl for name in opdata):
                 new_ll += decl
         else:
             # This is an inline definition. There must only be one.
             assert is_entry_point(function)
-            first_line = str(function).split("\n")[0]
+            lines = str(function).split("\n")
+            assert len(lines) >= 2
+            first_line = lines[0]
             assert " #0 " in first_line and first_line.endswith("{")
             new_ll += first_line + "\n"
             new_ll += "\n".join(
