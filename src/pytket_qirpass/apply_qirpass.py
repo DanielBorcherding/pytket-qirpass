@@ -208,7 +208,10 @@ def is_header_line(line: str) -> bool:
 
 def is_entry_point(function: ValueRef) -> bool:
     assert function.is_function
-    return any(b'"EntryPoint"' in attrs for attrs in function.attributes)
+    return any(
+        b'"EntryPoint"' in attrs or b'"InteropFriendly"' in attrs
+        for attrs in function.attributes
+    )
 
 
 def apply_qirpass(

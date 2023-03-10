@@ -107,7 +107,7 @@ prognames_2 = [
     "3_PauliX_PauliX_",
     "4_PauliX_PauliX_",
     "add_only",
-    # "and_only", # uses InteropFriendly instead of EntryPoint
+    "and_only",
     "ArithmeticOps.TargetedAlt_",
     "bad_div",
     "bool_tag",
@@ -118,22 +118,22 @@ prognames_2 = [
     "classical_flow6",
     "classical_flow",
     "comparison_instrs",
-    # "conditional_test_2", # uses InteropFriendly instead of EntryPoint
-    # "conditional-test-3", # uses InteropFriendly instead of EntryPoint
-    # "conditional_test_3", # uses InteropFriendly instead of EntryPoint
-    # "conditional_test_4", # uses InteropFriendly instead of EntryPoint
-    # "conditional_test", # uses InteropFriendly instead of EntryPoint
+    "conditional_test_2",
+    "conditional-test-3",
+    "conditional_test_3",
+    "conditional_test_4",
+    "conditional_test",
     "cond_ops",
     "control_flow_complex.baseProfile",
     "control_flow_long.baseProfile",
     "control_flow_nested.baseProfile",
     "control_flow_short.baseProfile",
     "cx_only",
-    # "Distillation", # uses InteropFriendly instead of EntryPoint
-    # "Distillation_other", # uses InteropFriendly instead of EntryPoint
-    # "Distillation_small", # uses InteropFriendly instead of EntryPoint
-    # "eq_only", # uses InteropFriendly instead of EntryPoint
-    # "fallthrough_simple", # uses InteropFriendly instead of EntryPoint
+    "Distillation",
+    "Distillation_other",
+    "Distillation_small",
+    "eq_only",
+    "fallthrough_simple",
     "gate_stress_5qb",
     "gate_stress_5qb_",
     "gate_stress_test_10k",
@@ -151,9 +151,9 @@ prognames_2 = [
     "gate_stress_test_50k",
     "gate_stress_test",
     "gate_stress_test_",
-    # "ge_only", # uses InteropFriendly instead of EntryPoint
+    "ge_only",
     "ghz_fail_",
-    # "gt_only", # uses InteropFriendly instead of EntryPoint
+    "gt_only",
     "h_only",
     "IntegerComparison.TargetedAlt_",
     "IntegerComparison.Targeted_",
@@ -162,22 +162,22 @@ prognames_2 = [
     "int_tag_alt_",
     "iqpe",
     "iqpe_",
-    # "le_only", # uses InteropFriendly instead of EntryPoint
+    "le_only",
     # "LogicalRb-BaseProfile.opt", # >1 defined function
     "loopRecursion.baseProfile",
-    # "lshr_only", # uses InteropFriendly instead of EntryPoint
-    # "lt_only", # uses InteropFriendly instead of EntryPoint
+    "lshr_only",
+    "lt_only",
     "MagicStateDistillation-BaseProfile.10X",
-    # "MagicStateDistillation-BaseProfile.3", # uses InteropFriendly instead of EntryPoint
-    # "MagicStateDistillation-BaseProfile-3X", # uses InteropFriendly instead of EntryPoint
+    "MagicStateDistillation-BaseProfile.3",
+    "MagicStateDistillation-BaseProfile-3X",
     "MagicStateDistillation-BaseProfile.3X",
     # "MagicStateDistillation.BaseProfile-4X", # >1 defined function
-    # "MagicStateDistillation-BaseProfile-5X", # uses InteropFriendly instead of EntryPoint
-    # "MagicStateDistillation-BaseProfile-6X", # uses InteropFriendly instead of EntryPoint
-    # "MagicStateDistillation-BaseProfile.6X", # uses InteropFriendly instead of EntryPoint
-    # "MagicStateDistillation-BaseProfile-7X", # uses InteropFriendly instead of EntryPoint
-    # "MagicStateDistillation-BaseProfile.8Y", # uses InteropFriendly instead of EntryPoint
-    # "MagicStateDistillation-BaseProfile.9X", # uses InteropFriendly instead of EntryPoint
+    "MagicStateDistillation-BaseProfile-5X",
+    "MagicStateDistillation-BaseProfile-6X",
+    "MagicStateDistillation-BaseProfile.6X",
+    "MagicStateDistillation-BaseProfile-7X",
+    "MagicStateDistillation-BaseProfile.8Y",
+    "MagicStateDistillation-BaseProfile.9X",
     # "MagicStateDistillation-BaseProfile-NoInline.10X", # >1 defined function
     # "MagicStateDistillation-BaseProfile.opt", # >1 defined function
     "MagicStateDistillation-Grouping.10X",
@@ -188,20 +188,20 @@ prognames_2 = [
     "measure_result",
     "most_features",
     # "most_features_", # "Instruction does not dominate all uses!"
-    # "mul_only", # uses InteropFriendly instead of EntryPoint
+    "mul_only",
     "multi_arith",
     "mutables_ops_branches.baseProfile",
     "native_gates",
     "negative_arith",
-    # "ne_only", # uses InteropFriendly instead of EntryPoint
+    "ne_only",
     "nested_conditions",
-    # "no_entry", # uses InteropFriendly instead of EntryPoint
+    "no_entry",
     "no-ops",
-    # "no_qubits", # uses InteropFriendly instead of EntryPoint
-    # "no_results", # uses InteropFriendly instead of EntryPoint
+    "no_qubits",
+    "no_results",
     "null_tag",
     "one_conditional",
-    # "or_only", # uses InteropFriendly instead of EntryPoint
+    "or_only",
     "phi_test_1",
     "phi_test_2",
     "phi_test_3",
@@ -250,8 +250,8 @@ prognames_2 = [
     "RUSLoopZZ-7_",
     "RUSLoopZZ-8_",
     "RUSLoopZZ-9_",
-    # "rx_only", # uses InteropFriendly instead of EntryPoint
-    # "rz_only", # uses InteropFriendly instead of EntryPoint
+    "rx_only",
+    "rz_only",
     "select",
     "select-nested-const-cond",
     "select-nested",
@@ -259,15 +259,15 @@ prognames_2 = [
     "sequential_flow_2",
     "sge",
     "sgt",
-    # "shl_only", # uses InteropFriendly instead of EntryPoint
-    # "SimpleGroverBaseProfile", # uses InteropFriendly instead of EntryPoint
+    "shl_only",
+    "SimpleGroverBaseProfile",
     "SimpleGroverGrouped",
     "SimpleGroverSample.BaseProfile",
     # "SimpleGroverSample", # >1 defined function
     # "SimpleGroverSample.O1", # >1 defined function
     "sle",
     "slt",
-    # "sub_only", # uses InteropFriendly instead of EntryPoint
+    "sub_only",
     "tadj_only",
     "tagged_duplicates",
     "tagged_result_control_flow",
@@ -275,9 +275,9 @@ prognames_2 = [
     "teleportchain.BaseProfile",
     "teleport-chain-grouping",
     "t_only",
-    # "udiv_only", # uses InteropFriendly instead of EntryPoint
+    "udiv_only",
     "x_only",
-    # "xor_only", # uses InteropFriendly instead of EntryPoint
+    "xor_only",
     "XX_recursion_limit8",
     "y_only",
     "zext",
