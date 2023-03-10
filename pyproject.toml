@@ -9,7 +9,7 @@ readme = "README.md"
 license = {file = "LICENSE"}
 classifiers = ["License :: OSI Approved :: Apache Software License"]
 dynamic = ["version", "description"]
-dependencies = ["pyqir >= 0.7.0,<0.8", "pytket >= 1.11.1,<2"]
+dependencies = ["llvmlite >= 0.39.1,<0.40", "pytket >= 1.11.1,<2"]
 
 [project.urls]
 Home = "https://github.com/CQCL/pytket-qirpass"

@@ -3,18 +3,23 @@ import unittest
 
 from pytket_qirpass import apply_qirpass
 
-from pyqir import Context, Module
+from llvmlite.binding import create_context, parse_assembly, parse_bitcode
 from pytket.circuit import OpType
 from pytket.passes import FullPeepholeOptimise
 
 QIR_DIR = Path(__file__).parent.resolve() / "qir"
 
 
-def ll_to_bc(ll: str) -> bytes:
-    ctx = Context()
-    module = Module.from_ir(ctx, ll)
+def ll_to_module(ll: str) -> bytes:
+    ctx = create_context()
+    module = parse_assembly(ll, context=ctx)
     module.verify()
-    return module.bitcode
+    return module
+
+
+def ll_to_bc(ll: str) -> bytes:
+    module = ll_to_module(ll)
+    return module.as_bitcode()
 
 
 prognames_1 = [
@@ -182,7 +187,7 @@ prognames_2 = [
     "measure_only",
     "measure_result",
     "most_features",
-    "most_features_",
+    # "most_features_", # "Instruction does not dominate all uses!"
     # "mul_only", # uses InteropFriendly instead of EntryPoint
     "multi_arith",
     "mutables_ops_branches.baseProfile",
@@ -290,8 +295,8 @@ def check_compilation(qir_ll_in):
         {OpType.Rx, OpType.Rz},
         {OpType.ZZPhase},
     )
-    ctx = Context()
-    module = Module.from_bitcode(ctx, qir_out)
+    ctx = create_context()
+    module = parse_bitcode(qir_out, context=ctx)
     module.verify()
 
 

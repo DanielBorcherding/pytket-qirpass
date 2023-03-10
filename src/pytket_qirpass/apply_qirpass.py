@@ -2,17 +2,7 @@ from math import pi
 import struct
 from typing import Set
 
-from pyqir import (
-    Constant,
-    Context,
-    FloatConstant,
-    Function,
-    Module,
-    Opcode,
-    is_entry_point,
-    required_num_qubits,
-    required_num_results,
-)
+from llvmlite.binding import create_context, parse_assembly, parse_bitcode
 from pytket.circuit import Bit, Circuit, OpType, Qubit
 from pytket.passes import (
     BasePass,
@@ -45,34 +35,55 @@ opdata = {
 tk_to_qir = {optype: (name, sig) for name, (optype, sig) in opdata.items()}
 
 
+def encode_double(a: float) -> str:
+    assert type(a) is float
+    encoding = struct.unpack("Q", struct.pack("d", a))
+    assert len(encoding) == 1
+    return f'double {"0x{:016X}".format(encoding[0])}'
+
+
+def decode_double(s: str) -> float:
+    assert type(s) is str
+    words = s.split(" ")
+    assert len(words) == 2 and words[0] == "double"
+    encoding = words[1]
+    try:
+        return float(encoding)
+    except ValueError:
+        n = int(encoding, 16)
+        return struct.unpack("d", struct.pack("Q", n))[0]
+
+
 def parse_instr(instr):
-    assert instr.opcode == Opcode.CALL
-    assert instr.type.is_void
-    optype, sig = opdata[instr.callee.name]
-    operands = instr.operands
-    assert type(operands[-1]) is Function
+    assert instr.opcode == "call"
+    assert str(instr.type) == "void"
+    operands = list(instr.operands)
+    assert len(operands) >= 1
+    optype, sig = opdata[operands[-1].name]
     params = []
     q_args = []
     c_args = []
     for operand in operands[:-1]:
-        if type(operand) is FloatConstant:
-            params.append(operand.value / pi)
-        else:
-            assert type(operand) is Constant
+        typename = str(operand.type)
+        if typename == "double":
+            params.append(decode_double(str(operand)) / pi)
+        elif typename == "%Qubit*":
             optext = str(operand).split(" ")
-            if optext[0] == "%Qubit*":
-                if optext[1] == "null":
-                    assert len(optext) == 2
-                    q_args.append(Qubit(0))
-                else:
-                    q_args.append(Qubit(int(optext[3])))
+            assert optext[0] == "%Qubit*"
+            if optext[1] == "null":
+                assert len(optext) == 2
+                q_args.append(Qubit(0))
             else:
-                assert optext[0] == "%Result*"
-                if optext[1] == "null":
-                    assert len(optext) == 2
-                    c_args.append(Bit(0))
-                else:
-                    c_args.append(Bit(int(optext[3])))
+                q_args.append(Qubit(int(optext[3])))
+        else:
+            assert typename == "%Result*"
+            optext = str(operand).split(" ")
+            assert optext[0] == "%Result*"
+            if optext[1] == "null":
+                assert len(optext) == 2
+                c_args.append(Bit(0))
+            else:
+                c_args.append(Bit(int(optext[3])))
     return (optype, params, q_args, c_args)
 
 
@@ -86,13 +97,6 @@ def to_circuit(instrs):
             circuit.add_bit(c, reject_dups=False)
         circuit.add_gate(optype, params, q_args + c_args)
     return circuit
-
-
-def paramrep(a):
-    assert type(a) is float
-    encoding = struct.unpack("Q", struct.pack("d", a))
-    assert len(encoding) == 1
-    return f'double {"0x{:016X}".format(encoding[0])}'
 
 
 def argrep(arg):
@@ -114,7 +118,11 @@ def argrep(arg):
 
 
 def is_known_type(instr):
-    return instr.opcode == Opcode.CALL and instr.callee.name in opdata.keys()
+    if instr.opcode != "call":
+        return False
+    operands = list(instr.operands)
+    assert len(operands) >= 1
+    return operands[-1].name in opdata.keys()
 
 
 def partition_instrs(instrs):
@@ -139,7 +147,7 @@ def compile_basic_block_ll(basic_block, comp_pass):
     bb_ll = ""
     if basic_block.name != "":
         bb_ll += str(basic_block).split("\n")[1] + "\n"  # keep top line with label
-    instructions = basic_block.instructions
+    instructions = list(basic_block.instructions)
     # Take maximal blocks of "known" quantum instructions and convert them to circuits;
     # leave the rest (assignments, classical operations, branches etc) as they are.
     sub_blocks = partition_instrs(instructions)
@@ -154,7 +162,7 @@ def compile_basic_block_ll(basic_block, comp_pass):
             optype, params = op.type, op.params
             name, sig = tk_to_qir[optype]
             assert len(params) + len(args) == len(sig.split(", "))
-            paramreps = [paramrep(param * pi) for param in params]
+            paramreps = [encode_double(param * pi) for param in params]
             argreps = [argrep(arg) for arg in args]
             bb_ll += f"  call void @{name}({', '.join(paramreps + argreps)})\n"
         # Write out the remaining instructions
@@ -163,11 +171,23 @@ def compile_basic_block_ll(basic_block, comp_pass):
     return bb_ll
 
 
-def ll_to_bc(ll: str) -> bytes:
-    ctx = Context()
-    module = Module.from_ir(ctx, ll)
+def bc_to_module(bc: bytes):
+    ctx = create_context()
+    module = parse_bitcode(bc, context=ctx)
     module.verify()
-    return module.bitcode
+    return module
+
+
+def ll_to_module(ll: str) -> bytes:
+    ctx = create_context()
+    module = parse_assembly(ll, context=ctx)
+    module.verify()
+    return module
+
+
+def ll_to_bc(ll: str) -> bytes:
+    module = ll_to_module(ll)
+    return module.as_bitcode()
 
 
 def is_header_line(line: str) -> bool:
@@ -175,6 +195,10 @@ def is_header_line(line: str) -> bool:
         return True
     words = line.split(" ")
     return len(words) >= 3 and "=" in words[1:-1]
+
+
+def is_entry_point(function):
+    return any(b'"EntryPoint"' in attrs for attrs in function.attributes)
 
 
 def apply_qirpass(
@@ -203,9 +227,7 @@ def apply_qirpass(
     :return: transformed QIR bitcode
     """
 
-    ctx = Context()
-    module = Module.from_bitcode(ctx, qir_bitcode)
-    module.verify()
+    module = bc_to_module(qir_bitcode)
 
     new_ll = ""
 
@@ -216,11 +238,13 @@ def apply_qirpass(
         else:
             break
 
-    functions = module.functions
+    functions = list(module.functions)
     entries = [f for f in functions if is_entry_point(f)]
     assert len(entries) == 1
     f0 = entries[0]
-    n_q, n_c = required_num_qubits(f0), required_num_results(f0)
+    f0_attrs = list(f0.attributes)
+    assert len(f0_attrs) == 1
+    f0_attr = f0_attrs[0].decode("utf-8")
 
     target_gates = target_1q_gates | target_2q_gates
 
@@ -236,7 +260,7 @@ def apply_qirpass(
 
     for function in functions:
         new_ll += "\n"
-        basic_blocks = function.basic_blocks
+        basic_blocks = list(function.blocks)
         if len(basic_blocks) == 0:
             # This is an external declaration
             decl = str(function)
@@ -264,7 +288,7 @@ def apply_qirpass(
                 new_ll += f"\ndeclare void @{name}({sig}) local_unnamed_addr\n"
 
     # Function attributes:
-    new_ll += f'\nattributes #0 = {{ "EntryPoint" "requiredQubits"="{n_q}" "requiredResults"="{n_c}" }}\n'
+    new_ll += f"\nattributes #0 = {{ {f0_attr} }}\n"
 
     # Metadata:
     for line in str(module).split("\n"):
