@@ -12,4 +12,4 @@ entry:
 }
 
 ; using InterOpFriendly instead of EntryPoint is now invalid
-attributes #0 = { "InteropFriendly" "requiredQubits"="1" "requiredResults"="1" }
+attributes #0 = { "EntryPoint" "requiredQubits"="1" "requiredResults"="1" }

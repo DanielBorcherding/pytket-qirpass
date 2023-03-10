@@ -530,5 +530,5 @@ declare void @__quantum__qis__ry__body(double, %Qubit*) local_unnamed_addr
 
 declare void @__quantum__qis__mz__body(%Qubit*, %Result*) local_unnamed_addr
 
-attributes #0 = { "InteropFriendly" "requiredQubits"="5" "requiredResults"="37" }
+attributes #0 = { "EntryPoint" "requiredQubits"="5" "requiredResults"="37" }
 

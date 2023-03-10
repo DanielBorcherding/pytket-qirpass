@@ -12,4 +12,4 @@ entry:
 }
 
 ; must have requiredresults
-attributes #0 = { "InteropFriendly" "requiredResults"="1" }
+attributes #0 = { "EntryPoint" "requiredResults"="1" }

@@ -12,5 +12,5 @@ entry:
 
 declare void @__quantum__qis__rz__body(double, %Qubit*) local_unnamed_addr
 
-attributes #0 = { "InteropFriendly" "requiredQubits"="1" "requiredResults"="0" }
+attributes #0 = { "EntryPoint" "requiredQubits"="1" "requiredResults"="0" }
 

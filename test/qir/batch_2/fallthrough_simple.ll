@@ -86,4 +86,4 @@ declare void @__quantum__qis__mz__body(%Qubit*, %Result*)
 
 declare i1 @__quantum__qir__read_result(%Result*)
 
-attributes #0 = { "InteropFriendly" }
+attributes #0 = { "EntryPoint" }

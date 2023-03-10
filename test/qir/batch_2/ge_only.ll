@@ -10,4 +10,4 @@ entry:
   ret void
 }
 
-attributes #0 = { "InteropFriendly" "requiredQubits"="1" "requiredResults"="1" }
+attributes #0 = { "EntryPoint" "requiredQubits"="1" "requiredResults"="1" }
