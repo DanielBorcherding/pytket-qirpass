@@ -6,34 +6,11 @@ This module provides a method to optimize QIR using pytket.
 
 Python 3.9, 3.10 or 3.11 is required.
 
-### From pypi
+To install from PyPI:
 
 ```shell
 pip install pytket-qirpass
 ```
-
-### Locally
-
-The package is built with the `flit` backend, so it is first necessary to
-install this:
-
-```shell
-pip install flit
-```
-
-Then to install lfrom the top-level directory (containing `pyproject.toml`):
-
-```shell
-flit install
-```
-
-To run unit tests:
-
-```shell
-python -m unittest test.test_qirpass
-```
-
-(These take a few minutes to run.)
 
 ## Usage
 
