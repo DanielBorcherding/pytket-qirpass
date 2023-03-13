@@ -24,7 +24,7 @@ opdata = {
     "__quantum__qis__cnot__body": (OpType.CX, "%Qubit*, %Qubit*"),
     "__quantum__qis__cz__body": (OpType.CZ, "%Qubit*, %Qubit*"),
     "__quantum__qis__h__body": (OpType.H, "%Qubit*"),
-    "__quantum__qis__mz__body": (OpType.Measure, "%Qubit*, %Result*"),
+    "__quantum__qis__mz__body": (OpType.Measure, "%Qubit*, %Result* writeonly"),
     "__quantum__qis__reset__body": (OpType.Reset, "%Qubit*"),
     "__quantum__qis__rx__body": (OpType.Rx, "double, %Qubit*"),
     "__quantum__qis__ry__body": (OpType.Ry, "double, %Qubit*"),
