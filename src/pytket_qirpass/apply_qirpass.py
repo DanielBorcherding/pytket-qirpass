@@ -21,6 +21,7 @@ from pytket.passes import (
 
 # Gates taken from https://github.com/qir-alliance/qat/blob/main/targets/target_7ee0.yaml
 opdata = {
+    # Gates taken from https://github.com/qir-alliance/qat/blob/main/targets/target_7ee0.yaml:
     "__quantum__qis__cnot__body": (OpType.CX, "%Qubit*, %Qubit*"),
     "__quantum__qis__cz__body": (OpType.CZ, "%Qubit*, %Qubit*"),
     "__quantum__qis__h__body": (OpType.H, "%Qubit*"),
@@ -36,6 +37,9 @@ opdata = {
     "__quantum__qis__x__body": (OpType.X, "%Qubit*"),
     "__quantum__qis__y__body": (OpType.Y, "%Qubit*"),
     "__quantum__qis__z__body": (OpType.Z, "%Qubit*"),
+    # Additional gates:
+    "__quantum__qis__phasedx__body": (OpType.PhasedX, "double, double, %Qubit*"),
+    "__quantum__qis__zzmax__body": (OpType.ZZMax, "%Qubit*, %Qubit*"),
 }
 
 tk_to_qir = {optype: (name, sig) for name, (optype, sig) in opdata.items()}
