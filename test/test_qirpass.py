@@ -4,6 +4,7 @@ import unittest
 from pytket_qirpass import apply_qirpass
 
 from llvmlite.binding import create_context, parse_assembly, parse_bitcode, ModuleRef
+from pyqir import Context, Module
 from pytket.circuit import OpType
 from pytket.passes import FullPeepholeOptimise
 
@@ -287,6 +288,18 @@ prognames_2 = [
 ]
 
 
+def verify_with_llvmlite(qir_bitcode: bytes) -> None:
+    ctx = create_context()
+    module = parse_bitcode(qir_bitcode, context=ctx)
+    module.verify()
+
+
+def verify_with_pyqir(qir_bitcode: bytes) -> None:
+    ctx = Context()
+    module = Module.from_bitcode(ctx, qir_bitcode)
+    module.verify()
+
+
 def check_compilation(qir_ll_in: str) -> None:
     qir_in = ll_to_bc(qir_ll_in)
     qir_out = apply_qirpass(
@@ -295,9 +308,8 @@ def check_compilation(qir_ll_in: str) -> None:
         {OpType.Rx, OpType.Rz},
         {OpType.ZZPhase},
     )
-    ctx = create_context()
-    module = parse_bitcode(qir_out, context=ctx)
-    module.verify()
+    verify_with_llvmlite(qir_out)
+    verify_with_pyqir(qir_out)
 
 
 class TestQirPass(unittest.TestCase):
