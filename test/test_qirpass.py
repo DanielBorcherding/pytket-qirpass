@@ -304,9 +304,9 @@ def check_compilation(qir_ll_in: str) -> None:
     qir_in = ll_to_bc(qir_ll_in)
     qir_out = apply_qirpass(
         qir_in,
-        FullPeepholeOptimise(allow_swaps=False),
-        {OpType.Rx, OpType.Rz},
-        {OpType.ZZPhase},
+        FullPeepholeOptimise(target_2qb_gate=OpType.TK2, allow_swaps=False),
+        {OpType.PhasedX, OpType.Rz},
+        {OpType.ZZMax, OpType.ZZPhase},
     )
     verify_with_llvmlite(qir_out)
     verify_with_pyqir(qir_out)
