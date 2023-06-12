@@ -31,6 +31,7 @@ opdata = {
     "__quantum__qis__ry__body": (OpType.Ry, "double, %Qubit*"),
     "__quantum__qis__rz__body": (OpType.Rz, "double, %Qubit*"),
     "__quantum__qis__rzz__body": (OpType.ZZPhase, "double, %Qubit*, %Qubit*"),
+    "__quantum__qis__rxx__body": (OpType.XXPhase, "double, %Qubit*, %Qubit*"),
     "__quantum__qis__s__body": (OpType.S, "%Qubit*"),
     "__quantum__qis__t__body": (OpType.T, "%Qubit*"),
     "__quantum__qis__t__adj": (OpType.Tdg, "%Qubit*"),
