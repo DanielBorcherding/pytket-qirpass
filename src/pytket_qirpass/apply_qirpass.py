@@ -22,25 +22,25 @@ from pytket.passes import (
 # Gates taken from https://github.com/qir-alliance/qat/blob/main/targets/target_7ee0.yaml
 opdata = {
     # Gates taken from https://github.com/qir-alliance/qat/blob/main/targets/target_7ee0.yaml:
-    "__quantum__qis__cnot__body": (OpType.CX, "%Qubit*, %Qubit*"),
-    "__quantum__qis__cz__body": (OpType.CZ, "%Qubit*, %Qubit*"),
-    "__quantum__qis__h__body": (OpType.H, "%Qubit*"),
-    "__quantum__qis__mz__body": (OpType.Measure, "%Qubit*, %Result* writeonly"),
-    "__quantum__qis__reset__body": (OpType.Reset, "%Qubit*"),
-    "__quantum__qis__rx__body": (OpType.Rx, "double, %Qubit*"),
-    "__quantum__qis__ry__body": (OpType.Ry, "double, %Qubit*"),
-    "__quantum__qis__rz__body": (OpType.Rz, "double, %Qubit*"),
-    "__quantum__qis__rzz__body": (OpType.ZZPhase, "double, %Qubit*, %Qubit*"),
-    "__quantum__qis__rxx__body": (OpType.XXPhase, "double, %Qubit*, %Qubit*"),
-    "__quantum__qis__s__body": (OpType.S, "%Qubit*"),
-    "__quantum__qis__t__body": (OpType.T, "%Qubit*"),
-    "__quantum__qis__t__adj": (OpType.Tdg, "%Qubit*"),
-    "__quantum__qis__x__body": (OpType.X, "%Qubit*"),
-    "__quantum__qis__y__body": (OpType.Y, "%Qubit*"),
-    "__quantum__qis__z__body": (OpType.Z, "%Qubit*"),
+    "__quantum__qis__cnot__body": (OpType.CX, "i8*, i8*"),
+    "__quantum__qis__cz__body": (OpType.CZ, "i8*, i8*"),
+    "__quantum__qis__h__body": (OpType.H, "i8*"),
+    "__quantum__qis__mz__body": (OpType.Measure, "i8*, %Result* writeonly"),
+    "__quantum__qis__reset__body": (OpType.Reset, "i8*"),
+    "__quantum__qis__rx__body": (OpType.Rx, "double, i8*"),
+    "__quantum__qis__ry__body": (OpType.Ry, "double, i8*"),
+    "__quantum__qis__rz__body": (OpType.Rz, "double, i8*"),
+    "__quantum__qis__rzz__body": (OpType.ZZPhase, "double, i8*, i8*"),
+    "__quantum__qis__rxx__body": (OpType.XXPhase, "double, i8*, i8*"),
+    "__quantum__qis__s__body": (OpType.S, "i8*"),
+    "__quantum__qis__t__body": (OpType.T, "i8*"),
+    "__quantum__qis__t__adj": (OpType.Tdg, "i8*"),
+    "__quantum__qis__x__body": (OpType.X, "i8*"),
+    "__quantum__qis__y__body": (OpType.Y, "i8*"),
+    "__quantum__qis__z__body": (OpType.Z, "i8*"),
     # Additional gates:
-    "__quantum__qis__phasedx__body": (OpType.PhasedX, "double, double, %Qubit*"),
-    "__quantum__qis__zzmax__body": (OpType.ZZMax, "%Qubit*, %Qubit*"),
+    "__quantum__qis__phasedx__body": (OpType.PhasedX, "double, double, i8*"),
+    "__quantum__qis__zzmax__body": (OpType.ZZMax, "i8*, i8*"),
 }
 
 tk_to_qir = {optype: (name, sig) for name, (optype, sig) in opdata.items()}
@@ -79,18 +79,19 @@ def parse_instr(instr: ValueRef) -> Tuple[OpType, List[float], List[Qubit], List
         typename = str(operand.type)
         if typename == "double":
             params.append(decode_double(str(operand)) / pi)
-        elif typename == "%Qubit*":
+
+        elif typename == "%Qubit*" or typename == "i8*":
             optext = str(operand).split(" ")
-            assert optext[0] == "%Qubit*"
+            assert (optext[0] == "%Qubit*") or (optext[0] == "i8*")
             if optext[1] == "null":
                 assert len(optext) == 2
                 q_args.append(Qubit(0))
             else:
                 q_args.append(Qubit(int(optext[3])))
         else:
-            assert typename == "%Result*"
+            assert (typename == "%Result*")
             optext = str(operand).split(" ")
-            assert optext[0] == "%Result*"
+            assert (optext[0] == "%Result*") or (optext[0])
             if optext[1] == "null":
                 assert len(optext) == 2
                 c_args.append(Bit(0))
@@ -182,6 +183,9 @@ def compile_basic_block_ll(basic_block: ValueRef, comp_pass: BasePass):
         # Write out the remaining instructions
         for instr in unknown_sub_block:
             bb_ll += str(instr) + "\n"
+
+    #Replace Qubit datatype to integer datatype
+    bb_ll = bb_ll.replace("%Qubit", "i8")
     return bb_ll
 
 
@@ -258,7 +262,9 @@ def apply_qirpass(
     assert len(entries) == 1
     f0 = entries[0]
     f0_attrs = list(f0.attributes)
-    assert len(f0_attrs) == 1
+    #f0_attr = b" ".join(f0_attrs).decode("utf-8")
+    #Somehow for us f0_attr[1] contains noundef which is not a function attribute. So for the
+    #llvm that we generate only f0_attr[0] is needed here.
     f0_attr = f0_attrs[0].decode("utf-8")
 
     target_gates = target_1q_gates | target_2q_gates
@@ -287,9 +293,13 @@ def apply_qirpass(
             assert is_entry_point(function)
             lines = str(function).split("\n")
             assert len(lines) >= 2
-            first_line = lines[0]
-            assert " #0 " in first_line and first_line.endswith("{")
-            new_ll += first_line + "\n"
+            if " #0 " in lines[0] and lines[0].endswith("{"):
+                first_lines = lines[0]
+            elif " #0 " in lines[1] and lines[1].endswith("{"):
+                first_lines = lines[0] + "\n" + lines[1]
+            else:
+                assert False
+            new_ll += first_lines + "\n"
             new_ll += "\n".join(
                 compile_basic_block_ll(basic_block, comp_pass)
                 for basic_block in basic_blocks
