@@ -22,25 +22,25 @@ from pytket.passes import (
 # Gates taken from https://github.com/qir-alliance/qat/blob/main/targets/target_7ee0.yaml
 opdata = {
     # Gates taken from https://github.com/qir-alliance/qat/blob/main/targets/target_7ee0.yaml:
-    "__quantum__qis__cnot__body": (OpType.CX, "i8*, i8*"),
-    "__quantum__qis__cz__body": (OpType.CZ, "i8*, i8*"),
-    "__quantum__qis__h__body": (OpType.H, "i8*"),
-    "__quantum__qis__mz__body": (OpType.Measure, "i8*, %Result* writeonly"),
-    "__quantum__qis__reset__body": (OpType.Reset, "i8*"),
-    "__quantum__qis__rx__body": (OpType.Rx, "double, i8*"),
-    "__quantum__qis__ry__body": (OpType.Ry, "double, i8*"),
-    "__quantum__qis__rz__body": (OpType.Rz, "double, i8*"),
-    "__quantum__qis__rzz__body": (OpType.ZZPhase, "double, i8*, i8*"),
-    "__quantum__qis__rxx__body": (OpType.XXPhase, "double, i8*, i8*"),
-    "__quantum__qis__s__body": (OpType.S, "i8*"),
-    "__quantum__qis__t__body": (OpType.T, "i8*"),
-    "__quantum__qis__t__adj": (OpType.Tdg, "i8*"),
-    "__quantum__qis__x__body": (OpType.X, "i8*"),
-    "__quantum__qis__y__body": (OpType.Y, "i8*"),
-    "__quantum__qis__z__body": (OpType.Z, "i8*"),
+    "__quantum__qis__cnot__body": (OpType.CX, "%Qubit*, %Qubit*"),
+    "__quantum__qis__cz__body": (OpType.CZ, "%Qubit*, %Qubit*"),
+    "__quantum__qis__h__body": (OpType.H, "%Qubit*"),
+    "__quantum__qis__mz__body": (OpType.Measure, "%Qubit*, %Result* writeonly"),
+    "__quantum__qis__reset__body": (OpType.Reset, "%Qubit*"),
+    "__quantum__qis__rx__body": (OpType.Rx, "double, %Qubit*"),
+    "__quantum__qis__ry__body": (OpType.Ry, "double, %Qubit*"),
+    "__quantum__qis__rz__body": (OpType.Rz, "double, %Qubit*"),
+    "__quantum__qis__rzz__body": (OpType.ZZPhase, "double, %Qubit*, %Qubit*"),
+    "__quantum__qis__rxx__body": (OpType.XXPhase, "double, %Qubit*, %Qubit*"),
+    "__quantum__qis__s__body": (OpType.S, "%Qubit*"),
+    "__quantum__qis__t__body": (OpType.T, "%Qubit*"),
+    "__quantum__qis__t__adj": (OpType.Tdg, "%Qubit*"),
+    "__quantum__qis__x__body": (OpType.X, "%Qubit*"),
+    "__quantum__qis__y__body": (OpType.Y, "%Qubit*"),
+    "__quantum__qis__z__body": (OpType.Z, "%Qubit*"),
     # Additional gates:
-    "__quantum__qis__phasedx__body": (OpType.PhasedX, "double, double, i8*"),
-    "__quantum__qis__zzmax__body": (OpType.ZZMax, "i8*, i8*"),
+    "__quantum__qis__phasedx__body": (OpType.PhasedX, "double, double, %Qubit*"),
+    "__quantum__qis__zzmax__body": (OpType.ZZMax, "%Qubit*, %Qubit*"),
 }
 
 tk_to_qir = {optype: (name, sig) for name, (optype, sig) in opdata.items()}
@@ -80,9 +80,9 @@ def parse_instr(instr: ValueRef) -> Tuple[OpType, List[float], List[Qubit], List
         if typename == "double":
             params.append(decode_double(str(operand)) / pi)
 
-        elif typename == "%Qubit*" or typename == "i8*":
+        elif typename == "%Qubit*":
             optext = str(operand).split(" ")
-            assert (optext[0] == "%Qubit*") or (optext[0] == "i8*")
+            assert (optext[0] == "%Qubit*")
             if optext[1] == "null":
                 assert len(optext) == 2
                 q_args.append(Qubit(0))
@@ -184,8 +184,6 @@ def compile_basic_block_ll(basic_block: ValueRef, comp_pass: BasePass):
         for instr in unknown_sub_block:
             bb_ll += str(instr) + "\n"
 
-    #Replace Qubit datatype to integer datatype
-    bb_ll = bb_ll.replace("%Qubit", "i8")
     return bb_ll
 
 
